@@ -1,0 +1,45 @@
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+
+// Some older plugins don't declare a namespace, which AGP 8+ requires.
+// Fall back to the plugin's package (Flutter sets `group` to match the
+// AndroidManifest.xml package for plugin subprojects). Must run before
+// evaluationDependsOn forces early evaluation below.
+subprojects {
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin("com.android.library")) {
+            project.android {
+                if (namespace == null) {
+                    namespace project.group
+                }
+            }
+        }
+    }
+}
+
+subprojects {
+    project.evaluationDependsOn(':app')
+}
+
+// Some older plugins don't set a Kotlin jvmTarget, so it defaults to the JDK
+// running Gradle (21), which then conflicts with their Java 1.8 compileOptions.
+subprojects {
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            jvmTarget = "1.8"
+        }
+    }
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.layout.buildDirectory
+}
