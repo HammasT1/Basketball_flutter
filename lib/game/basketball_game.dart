@@ -23,6 +23,21 @@ class BasketBallGame extends Forge2DGame
   ValueNotifier<int> score = ValueNotifier(0);
   bool startedGame = false;
 
+  /// Swiped baskets needed to charge one dunk.
+  static const int dunkChargeNeeded = 3;
+
+  /// Progress towards the next dunk, from 0 to [dunkChargeNeeded].
+  ValueNotifier<int> dunkCharge = ValueNotifier(0);
+
+  bool get isDunkReady => dunkCharge.value >= dunkChargeNeeded;
+
+  /// Called when a swiped (not dunked) shot goes in. Charges the dunk meter.
+  void chargeDunk() {
+    if (dunkCharge.value < dunkChargeNeeded) {
+      dunkCharge.value += 1;
+    }
+  }
+
   /// The visible game area in world (physics) coordinates, as opposed to
   /// [size] which is the screen size in virtual pixels.
   Vector2 get worldSize => screenToWorld(size);
@@ -54,6 +69,7 @@ class BasketBallGame extends Forge2DGame
 //reset score when game is over
   void resetScore() {
     score.value = 0;
+    dunkCharge.value = 0;
   }
 
 //add overlay to game
@@ -61,12 +77,16 @@ class BasketBallGame extends Forge2DGame
     overlays.add(overlay.name);
   }
 
-  /// Sends the currently active ball on a guaranteed arc into the net.
-  /// Used by the on-screen Dunk button.
+  /// Sends the ball waiting at the bottom on a guaranteed arc into the net.
+  /// Used by the on-screen Dunk button, and only works once the dunk meter
+  /// is fully charged. Using it empties the meter.
   void dunkActiveBall() {
-    final balls = world.children.whereType<BallComponent>();
-    if (balls.isNotEmpty) {
-      balls.first.dunk();
+    if (!isDunkReady || paused) return;
+    final balls = world.children
+        .whereType<BallComponent>()
+        .where((ball) => ball.isWaitingToBeShot);
+    if (balls.isNotEmpty && balls.first.dunk()) {
+      dunkCharge.value = 0;
     }
   }
 

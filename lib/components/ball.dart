@@ -98,14 +98,21 @@ class BallComponent extends BodyComponent<BasketBallGame>
   @override
   void onDragUpdate(DragUpdateEvent event) {
     //move the ball towards direction of the user's swipe
-    if (_canSwipe) {
+    if (_canSwipe && !_isDunking) {
       body.linearVelocity = event.localDelta * 100;
       body.applyLinearImpulse(
         Vector2(event.localDelta.x, -5) * 8000,
       );
       _createNewBall = true;
+      _hasBeenShot = true;
     }
   }
+
+  /// True once the player has swiped or dunked this ball.
+  bool _hasBeenShot = false;
+
+  /// Whether this is the ball sitting at the bottom, ready for the next shot.
+  bool get isWaitingToBeShot => !_hasBeenShot && _canSwipe;
 
   //tracks the scripted flight of a dunk() shot
   bool _isDunking = false;
@@ -121,8 +128,9 @@ class BallComponent extends BodyComponent<BasketBallGame>
 
   /// Sends the ball on a guaranteed arc straight into the net, no aiming or
   /// swipe strength required. Used by the on-screen Dunk button.
-  void dunk() {
-    if (!_canSwipe || _isDunking) return;
+  /// Returns false if this ball can't be dunked (already shot or in flight).
+  bool dunk() {
+    if (!isWaitingToBeShot || _isDunking) return false;
     if (_canDrag) {
       FlameAudio.play(AudioAssets.shoot, volume: 0.8);
       _canDrag = false;
@@ -141,6 +149,8 @@ class BallComponent extends BodyComponent<BasketBallGame>
     _dunkElapsed = 0;
     _isDunking = true;
     _createNewBall = true;
+    _hasBeenShot = true;
+    return true;
   }
 
   @override
@@ -173,6 +183,8 @@ class BallComponent extends BodyComponent<BasketBallGame>
         _hasReachedTop) {
       game.score.value += 1;
       _hasRecordedScore = true;
+      // only swiped baskets charge the dunk meter, dunks don't
+      game.chargeDunk();
     }
     //check to disable swipe of a ball after it leaves the bottom of the screen
     if (body.position.y <= 55) {

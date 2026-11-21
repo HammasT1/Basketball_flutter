@@ -64,60 +64,120 @@ class ScoreBoard extends StatelessWidget {
             left: 0,
             right: 0,
             child: Center(
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(55),
+              child: ValueListenableBuilder<int>(
+                valueListenable: game.dunkCharge,
+                builder: (context, charge, _) => _DunkButton(
+                  charge: charge,
+                  needed: BasketBallGame.dunkChargeNeeded,
                   onTap: game.dunkActiveBall,
-                  child: Container(
-                    width: 110,
-                    height: 110,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const RadialGradient(
-                        colors: [Colors.amberAccent, Colors.deepOrange],
-                        radius: 0.9,
-                      ),
-                      border: Border.all(color: Colors.black, width: 4),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.orangeAccent,
-                          blurRadius: 18,
-                          spreadRadius: 2,
-                        ),
-                        BoxShadow(
-                          color: Colors.black45,
-                          blurRadius: 6,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.sports_basketball,
-                            color: Colors.white, size: 34),
-                        Text(
-                          'DUNK!',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Enhanced LED Board-7',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
-              )
-                  .animate(onPlay: (controller) => controller.repeat(reverse: true))
-                  .scaleXY(begin: 1.0, end: 1.1, duration: 700.ms, curve: Curves.easeInOut),
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+}
+
+/// Dunk power-up button. Charges with each swiped basket and can only be
+/// used once full. While charging it is grey and shows progress.
+class _DunkButton extends StatelessWidget {
+  final int charge;
+  final int needed;
+  final VoidCallback onTap;
+
+  const _DunkButton({
+    required this.charge,
+    required this.needed,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool ready = charge >= needed;
+    const TextStyle labelStyle = TextStyle(
+      fontSize: 16,
+      color: Colors.white,
+      fontWeight: FontWeight.w700,
+      fontFamily: 'Enhanced LED Board-7',
+    );
+
+    Widget button = SizedBox(
+      width: 124,
+      height: 124,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // charge progress ring
+          SizedBox(
+            width: 124,
+            height: 124,
+            child: CircularProgressIndicator(
+              value: charge / needed,
+              strokeWidth: 6,
+              backgroundColor: Colors.black45,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                  ready ? Colors.amberAccent : Colors.orange),
+            ),
+          ),
+          Material(
+            color: Colors.transparent,
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: ready ? onTap : null,
+              child: Container(
+                width: 110,
+                height: 110,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: ready
+                        ? const [Colors.amberAccent, Colors.deepOrange]
+                        : [Colors.grey.shade500, Colors.grey.shade800],
+                    radius: 0.9,
+                  ),
+                  border: Border.all(color: Colors.black, width: 4),
+                  boxShadow: [
+                    if (ready)
+                      const BoxShadow(
+                        color: Colors.orangeAccent,
+                        blurRadius: 18,
+                        spreadRadius: 2,
+                      ),
+                    const BoxShadow(
+                      color: Colors.black45,
+                      blurRadius: 6,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.sports_basketball,
+                        color: ready ? Colors.white : Colors.white54,
+                        size: 34),
+                    Text(ready ? 'DUNK!' : '$charge/$needed',
+                        style: labelStyle),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    // only pulse when the dunk is ready to use
+    if (ready) {
+      button = button
+          .animate(onPlay: (controller) => controller.repeat(reverse: true))
+          .scaleXY(
+              begin: 1.0, end: 1.1, duration: 700.ms, curve: Curves.easeInOut);
+    }
+    return button;
   }
 }
