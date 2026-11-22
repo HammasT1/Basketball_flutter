@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-label="Basketball: swipe, dunk, catch fire. Built with Flutter, Flame and Forge2D.">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0D0D0D"/>
+      <stop offset="1" stop-color="#1F0E06"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.82" cy="0.45" r="0.55">
+      <stop offset="0" stop-color="#FF5722" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#FF5722" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="title" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFD740"/>
+      <stop offset="1" stop-color="#FF5722"/>
+    </linearGradient>
+    <radialGradient id="ball" cx="0.35" cy="0.3" r="0.75">
+      <stop offset="0" stop-color="#FF8A50"/>
+      <stop offset="1" stop-color="#D84315"/>
+    </radialGradient>
+    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <path id="shot" d="M 600 330 Q 820 -60 1010 150 L 1010 300"/>
+  </defs>
+
+  <style>
+    .title { font: 900 86px 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; letter-spacing: 6px; }
+    .tag   { font: 700 22px 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; letter-spacing: 7px; fill: #FFFFFF; }
+    .sub   { font: 600 16px 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; letter-spacing: 3px; fill: #FFD740; }
+    .led   { font: 700 22px 'Courier New', Consolas, monospace; fill: #FFD740; letter-spacing: 2px; }
+    .blink { animation: blink 1s steps(1) infinite; }
+    .pulse { animation: pulse 2.4s ease-in-out infinite; transform-origin: 160px 290px; }
+    @keyframes blink { 50% { opacity: 0; } }
+    @keyframes pulse { 0%,100% { opacity: .75; } 50% { opacity: 1; } }
+  </style>
+
+  <rect width="1200" height="360" rx="22" fill="url(#bg)"/>
+  <rect width="1200" height="360" rx="22" fill="url(#glow)"/>
+
+  <!-- court floor lines -->
+  <g stroke="#FF5722" stroke-opacity="0.22" stroke-width="2" fill="none">
+    <path d="M 0 330 H 1200"/>
+    <path d="M 560 330 Q 820 250 1200 260"/>
+    <path d="M 700 360 L 880 330"/>
+  </g>
+
+  <!-- title block -->
+  <text x="70" y="150" class="title" fill="url(#title)">BASKETBALL</text>
+  <text x="74" y="200" class="tag">SWIPE · DUNK · CATCH FIRE</text>
+  <text x="74" y="236" class="sub">FLUTTER  ×  FLAME  ×  FORGE2D</text>
+
+  <!-- LED scoreboard -->
+  <g class="pulse">
+    <rect x="70" y="266" width="300" height="48" rx="12" fill="#000" stroke="#FF5722" stroke-width="2"/>
+    <text x="90" y="298" class="led">PTS 42</text>
+    <text x="232" y="298" class="led">00<tspan class="blink">:</tspan>30</text>
+  </g>
+
+  <!-- backboard + stand -->
+  <rect x="1062" y="70" width="12" height="130" rx="3" fill="#FFFFFF" fill-opacity="0.9"/>
+  <rect x="1074" y="120" width="40" height="8" fill="#FFFFFF" fill-opacity="0.35"/>
+  <rect x="1110" y="120" width="10" height="210" fill="#FFFFFF" fill-opacity="0.25"/>
+
+  <!-- fire trail (lagging copies of the ball) -->
+  <g filter="url(#blur)" opacity="0">
+    <set attributeName="opacity" to="1" begin="0.3s"/>
+    <circle r="18" fill="#FFD740" opacity="0.55">
+      <animateMotion dur="2.6s" begin="0.08s" repeatCount="indefinite" keyPoints="0;0.82;1" keyTimes="0;0.7;1" calcMode="linear"><mpath href="#shot"/></animateMotion>
+    </circle>
+    <circle r="14" fill="#FF6D00" opacity="0.45">
+      <animateMotion dur="2.6s" begin="0.16s" repeatCount="indefinite" keyPoints="0;0.82;1" keyTimes="0;0.7;1" calcMode="linear"><mpath href="#shot"/></animateMotion>
+    </circle>
+    <circle r="10" fill="#FF5722" opacity="0.35">
+      <animateMotion dur="2.6s" begin="0.24s" repeatCount="indefinite" keyPoints="0;0.82;1" keyTimes="0;0.7;1" calcMode="linear"><mpath href="#shot"/></animateMotion>
+    </circle>
+  </g>
+
+  <!-- the ball (hidden until the animation positions it) -->
+  <g opacity="0">
+    <animateMotion dur="2.6s" repeatCount="indefinite" keyPoints="0;0.82;1" keyTimes="0;0.7;1" calcMode="linear"><mpath href="#shot"/></animateMotion>
+    <animate attributeName="opacity" dur="2.6s" repeatCount="indefinite" values="0;1;1;0" keyTimes="0;0.05;0.85;1"/>
+    <g>
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="1s" repeatCount="indefinite"/>
+      <circle r="20" fill="url(#ball)"/>
+      <g stroke="#3E1A0B" stroke-width="2" fill="none">
+        <path d="M -20 0 H 20"/>
+        <path d="M 0 -20 V 20"/>
+        <path d="M -14 -14 Q 0 0 -14 14"/>
+        <path d="M 14 -14 Q 0 0 14 14"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- rim + net (drawn after the ball so the ball drops through) -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" dur="2.6s" repeatCount="indefinite"
+      values="0 0; 0 0; 0 6; 0 0" keyTimes="0; 0.72; 0.8; 1"/>
+    <g stroke="#FFFFFF" stroke-opacity="0.8" stroke-width="2" fill="none">
+      <path d="M 972 176 L 988 236 M 990 176 L 999 236 M 1010 176 L 1010 236 M 1030 176 L 1021 236 M 1048 176 L 1032 236"/>
+      <path d="M 976 196 H 1044 M 982 216 H 1038 M 988 236 H 1032"/>
+    </g>
+    <ellipse cx="1010" cy="176" rx="40" ry="7" fill="none" stroke="#FF5722" stroke-width="6"/>
+  </g>
+</svg>
