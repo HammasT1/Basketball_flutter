@@ -38,6 +38,42 @@ class BasketBallGame extends Forge2DGame
     }
   }
 
+  /// Baskets in a row needed to go "on fire".
+  static const int fireStreak = 3;
+
+  /// Points per basket are multiplied by this while on fire.
+  static const int fireMultiplier = 2;
+
+  /// Consecutive baskets without a miss.
+  ValueNotifier<int> streak = ValueNotifier(0);
+
+  /// True while the player is on fire: every basket is worth double.
+  ValueNotifier<bool> onFire = ValueNotifier(false);
+
+  /// Set while the round is over, so balls cleared at the buzzer don't count
+  /// as missed shots.
+  bool isGameOver = false;
+
+  /// Records a made basket (swiped or dunked), extends the streak and applies
+  /// the on-fire multiplier. Returns the points awarded.
+  int registerBasket() {
+    if (isGameOver) return 0;
+    final int points = onFire.value ? fireMultiplier : 1;
+    score.value += points;
+    streak.value += 1;
+    if (streak.value >= fireStreak) {
+      onFire.value = true;
+    }
+    return points;
+  }
+
+  /// Records a missed shot: the streak and the on-fire bonus are lost.
+  void registerMiss() {
+    if (isGameOver) return;
+    streak.value = 0;
+    onFire.value = false;
+  }
+
   /// The visible game area in world (physics) coordinates, as opposed to
   /// [size] which is the screen size in virtual pixels.
   Vector2 get worldSize => screenToWorld(size);
@@ -70,6 +106,9 @@ class BasketBallGame extends Forge2DGame
   void resetScore() {
     score.value = 0;
     dunkCharge.value = 0;
+    streak.value = 0;
+    onFire.value = false;
+    isGameOver = false;
   }
 
 //add overlay to game
@@ -81,7 +120,7 @@ class BasketBallGame extends Forge2DGame
   /// Used by the on-screen Dunk button, and only works once the dunk meter
   /// is fully charged. Using it empties the meter.
   void dunkActiveBall() {
-    if (!isDunkReady || paused) return;
+    if (!isDunkReady || paused || isGameOver) return;
     final balls = world.children
         .whereType<BallComponent>()
         .where((ball) => ball.isWaitingToBeShot);
@@ -99,6 +138,7 @@ class BasketBallGame extends Forge2DGame
       onTick: () {
         if (timer.value == 0) {
           // Pause the game,pause bg song and remove all balls with scoreboard components
+          isGameOver = true;
           pauseEngine();
           world.removeWhere((component) => component is BallComponent);FlameAudio.bgm.pause().then(
               (value) => FlameAudio.play(AudioAssets.buzzer, volume: 0.5));

@@ -7,8 +7,12 @@ import 'package:basketball_game/game/basketball_game.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
+import 'package:flame/particles.dart';
 import 'package:flame_audio/flame_audio.dart';
-import 'package:flame_forge2d/flame_forge2d.dart';
+// forge2d has its own (unrelated) Particle class that clashes with Flame's
+import 'package:flame_forge2d/flame_forge2d.dart' hide Particle;
+import 'package:flutter/material.dart'
+    show BlurStyle, Color, Colors, MaskFilter, Offset, Paint;
 
 class BallComponent extends BodyComponent<BasketBallGame>
     with DragCallbacks, CollisionCallbacks, ContactCallbacks {
@@ -40,9 +44,30 @@ class BallComponent extends BodyComponent<BasketBallGame>
 //for creating random ball position
   final Random _ballPosition = Random();
 
+  /// True once this shot has been counted as a basket or a miss.
+  bool _isResolved = false;
+
+  /// Orange glow drawn behind the ball while the player is on fire.
+  late CircleComponent _glow;
+  static const Color _fireColor = Color(0xFFFF6D00);
+
+  /// Time since the last puff of embers in the on-fire trail.
+  double _sinceLastEmber = 0;
+  static const double _emberInterval = 0.04;
+
   @override
   Future<void> onLoad() async {
     super.onLoad();
+
+    // added before the sprite so it renders behind the ball
+    _glow = CircleComponent(
+      radius: 5.5,
+      anchor: Anchor.center,
+      paint: Paint()
+        ..color = Colors.transparent
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5),
+    );
+    add(_glow);
 
     //load ball component here
     _ball = SpriteComponent()
@@ -83,6 +108,16 @@ class BallComponent extends BodyComponent<BasketBallGame>
     fixtureDef = FixtureDef(shape,
         friction: 0, density: 3.0, restitution: 0.2, filter: filter);
     return world.createBody(bodyDef)..createFixture(fixtureDef);
+  }
+
+  @override
+  void onRemove() {
+    // A shot that leaves play without going in counts as a miss.
+    if (_hasBeenShot && !_isResolved) {
+      _isResolved = true;
+      game.registerMiss();
+    }
+    super.onRemove();
   }
 
   @override
@@ -154,8 +189,9 @@ class BallComponent extends BodyComponent<BasketBallGame>
   }
 
   @override
-  void update(double dt) async {
+  void update(double dt) {
     super.update(dt);
+    _updateFireEffect(dt);
 
     //fly the ball along the scripted dunk() arc instead of normal physics
     if (_isDunking) {
@@ -168,7 +204,8 @@ class BallComponent extends BodyComponent<BasketBallGame>
       body.setTransform(pos, body.angle);
       if (t >= 1.0) {
         _isDunking = false;
-        game.score.value += 1;
+        _isResolved = true;
+        game.registerBasket();
         FlameAudio.play(AudioAssets.swish1, volume: 0.8);
         removeFromParent();
         game.world.add(BallComponent());
@@ -181,11 +218,15 @@ class BallComponent extends BodyComponent<BasketBallGame>
         isBallBetweenRim(body.position) &&
         !_hasRecordedScore &&
         _hasReachedTop) {
-      game.score.value += 1;
       _hasRecordedScore = true;
+      _isResolved = true;
+      game.registerBasket();
       // only swiped baskets charge the dunk meter, dunks don't
       game.chargeDunk();
     }
+
+    _checkForMiss();
+
     //check to disable swipe of a ball after it leaves the bottom of the screen
     if (body.position.y <= 55) {
       _canSwipe = false;
@@ -225,6 +266,66 @@ class BallComponent extends BodyComponent<BasketBallGame>
     if (body.position.x > game.worldSize.x || body.position.x < 0) {
       removeFromParent();
     } else {}
+  }
+
+  /// Ends the shot as a miss as soon as it can no longer go in, so the streak
+  /// resets right away instead of when the ball finally fades out.
+  void _checkForMiss() {
+    if (!_hasBeenShot || _isResolved) return;
+    // Went over the rim, came back down below it and didn't score.
+    final bool droppedPastRim = _hasReachedTop && body.position.y > 40;
+    // Too weak to clear the rim and already falling back down.
+    final bool fellShort =
+        !_canSwipe && !_hasReachedTop && body.linearVelocity.y > 1;
+    if (droppedPastRim || fellShort) {
+      _isResolved = true;
+      game.registerMiss();
+    }
+  }
+
+  void _updateFireEffect(double dt) {
+    final bool onFire = game.onFire.value;
+    _glow.paint.color =
+        _fireColor.withValues(alpha: onFire ? 0.75 * _ball.opacity : 0);
+
+    // Leave a trail of embers behind a moving ball.
+    if (!onFire || _ball.opacity < 0.5 || body.linearVelocity.length2 < 25) {
+      return;
+    }
+    _sinceLastEmber += dt;
+    if (_sinceLastEmber < _emberInterval) return;
+    _sinceLastEmber = 0;
+    game.world.add(_createEmbers(body.position.clone()));
+  }
+
+  ParticleSystemComponent _createEmbers(Vector2 at) {
+    final Random rng = _ballPosition;
+    return ParticleSystemComponent(
+      position: at,
+      priority: priority - 1,
+      particle: Particle.generate(
+        count: 3,
+        lifespan: 0.4,
+        generator: (_) {
+          final Paint paint = Paint();
+          return AcceleratedParticle(
+            position:
+                Vector2(rng.nextDouble() * 4 - 2, rng.nextDouble() * 4 - 2),
+            speed: Vector2(rng.nextDouble() * 6 - 3, -rng.nextDouble() * 6),
+            acceleration: Vector2(0, -12),
+            child: ComputedParticle(
+              renderer: (canvas, particle) {
+                final double life = 1 - particle.progress;
+                paint.color = Color.lerp(
+                        Colors.yellowAccent, Colors.deepOrange, particle.progress)!
+                    .withValues(alpha: life);
+                canvas.drawCircle(Offset.zero, 1.3 * life, paint);
+              },
+            ),
+          );
+        },
+      ),
+    );
   }
 
   @override

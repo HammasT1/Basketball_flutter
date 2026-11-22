@@ -60,6 +60,20 @@ class ScoreBoard extends StatelessWidget {
             ),
           ),
           Positioned(
+            top: 82,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: AnimatedBuilder(
+                animation: Listenable.merge([game.streak, game.onFire]),
+                builder: (context, _) => _StreakBadge(
+                  streak: game.streak.value,
+                  onFire: game.onFire.value,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
             bottom: 24,
             left: 0,
             right: 0,
@@ -77,6 +91,62 @@ class ScoreBoard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Shows the current basket streak, or a pulsing "ON FIRE 2X" badge once the
+/// streak is long enough. Hidden when there is no streak.
+class _StreakBadge extends StatelessWidget {
+  final int streak;
+  final bool onFire;
+
+  const _StreakBadge({required this.streak, required this.onFire});
+
+  @override
+  Widget build(BuildContext context) {
+    if (streak == 0) return const SizedBox.shrink();
+
+    const TextStyle style = TextStyle(
+      fontSize: 16,
+      color: Colors.white,
+      fontWeight: FontWeight.w700,
+      fontFamily: 'Enhanced LED Board-7',
+    );
+
+    if (!onFire) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.black54,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text('STREAK x$streak', style: style),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Colors.amber, Colors.deepOrange, Colors.red],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.black, width: 2),
+        boxShadow: const [
+          BoxShadow(color: Colors.orangeAccent, blurRadius: 14, spreadRadius: 1),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.local_fire_department, color: Colors.white, size: 20),
+          const SizedBox(width: 4),
+          Text('ON FIRE 2X  x$streak', style: style),
+        ],
+      ),
+    )
+        .animate(onPlay: (controller) => controller.repeat(reverse: true))
+        .scaleXY(begin: 1.0, end: 1.08, duration: 500.ms, curve: Curves.easeInOut);
   }
 }
 
