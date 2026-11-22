@@ -10,6 +10,8 @@
 [![Forge2D](https://img.shields.io/badge/Forge2D-physics-FFD740?style=for-the-badge&labelColor=000000)](https://pub.dev/packages/flame_forge2d)
 <br/>
 [![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS%20%7C%20Web%20%7C%20Windows-FF6D00?style=flat-square&labelColor=000000)](#-getting-started)
+[![CI](https://img.shields.io/github/actions/workflow/status/HammasT1/Basketball_flutter/ci.yml?branch=main&style=flat-square&label=CI&labelColor=000000&color=FF6D00)](https://github.com/HammasT1/Basketball_flutter/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/HammasT1/Basketball_flutter?style=flat-square&labelColor=000000&color=FF6D00)](https://github.com/HammasT1/Basketball_flutter/releases)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-FF6D00?style=flat-square&labelColor=000000)](#-contributing)
 
 **A fast, physics-based arcade basketball game for mobile.**<br/>

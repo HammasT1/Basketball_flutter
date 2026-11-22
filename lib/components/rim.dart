@@ -6,6 +6,7 @@ import 'package:flame/components.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 
 class RimComponent extends BodyComponent with ContactCallbacks {
+  @override
   final Vector2 position;
   final bool collidesWithBall;
 
