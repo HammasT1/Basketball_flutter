@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:basketball_game/game/basketball_game.dart';
 import 'package:basketball_game/screens/menu/game_over.dart';
+import 'package:basketball_game/services/score_storage.dart';
 import 'package:basketball_game/widgets/scoreboard.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
@@ -44,6 +45,24 @@ class MainMenuScreen extends StatelessWidget {
                           fontFamily: 'Enhanced LED Board-7',
                           fontSize: 20),
                       textAlign: TextAlign.center,
+                    ),
+                    FutureBuilder<int>(
+                      future: ScoreStorage.loadHighScore(),
+                      builder: (context, snapshot) {
+                        final int best = snapshot.data ?? 0;
+                        if (best == 0) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: Text(
+                            'BEST: $best',
+                            style: const TextStyle(
+                                color: Colors.amberAccent,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Enhanced LED Board-7',
+                                fontSize: 18),
+                          ),
+                        );
+                      },
                     ),
                     Padding(
                       padding: const EdgeInsets.only(top: 40),

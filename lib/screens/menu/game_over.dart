@@ -19,17 +19,47 @@ class GameOverScreen extends StatelessWidget {
         elevation: 0,
         child: Container(
           width: screenSize.width * 0.9,
-          height: screenSize.height * 0.4,
+          padding: const EdgeInsets.only(bottom: 24),
           decoration: BoxDecoration(
               color: Colors.white, borderRadius: BorderRadius.circular(15)),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(
                   height: 150,
                   child: Lottie.asset('assets/animation/gameover.json')),
+              if (game.isNewHighScore)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                        colors: [Colors.amber, Colors.deepOrange]),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.emoji_events, color: Colors.white, size: 20),
+                      SizedBox(width: 6),
+                      Text(
+                        'NEW RECORD!',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Enhanced LED Board-7',
+                            fontSize: 16),
+                      ),
+                    ],
+                  ),
+                )
+                    .animate(
+                        onPlay: (controller) =>
+                            controller.repeat(reverse: true))
+                    .scaleXY(begin: 1.0, end: 1.1, duration: 600.ms),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 32.0),
+                padding: const EdgeInsets.only(top: 20, bottom: 8),
                 child: Text(
                   'You scored ${game.score.value} points',
                   style: const TextStyle(
@@ -37,6 +67,17 @@ class GameOverScreen extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Enhanced LED Board-7',
                       fontSize: 17),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 24),
+                child: Text(
+                  'BEST: ${game.highScore}',
+                  style: const TextStyle(
+                      color: Colors.deepOrange,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Enhanced LED Board-7',
+                      fontSize: 15),
                 ),
               ),
               SizedBox(

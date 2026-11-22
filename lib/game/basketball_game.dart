@@ -4,6 +4,7 @@ import 'package:basketball_game/components/boundary.dart';
 import 'package:basketball_game/components/mural_component.dart';
 import 'package:basketball_game/components/rim.dart';
 import 'package:basketball_game/constants/audio.dart';
+import 'package:basketball_game/services/score_storage.dart';
 import 'package:flame/components.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
@@ -54,6 +55,23 @@ class BasketBallGame extends Forge2DGame
   /// as missed shots.
   bool isGameOver = false;
 
+  /// Best score ever, saved on the device.
+  int highScore = 0;
+
+  /// True when the round that just ended beat the previous [highScore].
+  bool isNewHighScore = false;
+
+  /// Compares the final score with the best one and saves it if it's higher.
+  void _updateHighScore() {
+    if (score.value > highScore) {
+      highScore = score.value;
+      isNewHighScore = true;
+      ScoreStorage.saveHighScore(highScore);
+    } else {
+      isNewHighScore = false;
+    }
+  }
+
   /// Records a made basket (swiped or dunked), extends the streak and applies
   /// the on-fire multiplier. Returns the points awarded.
   int registerBasket() {
@@ -86,6 +104,7 @@ class BasketBallGame extends Forge2DGame
     // Forge2DGame behavior. The new default camera centers on (0,0) instead.
     camera.viewfinder.anchor = Anchor.topLeft;
     camera.viewfinder.position = Vector2.zero();
+    highScore = await ScoreStorage.loadHighScore();
     //load all gameComponents
     await loadAllComponents();
   }
@@ -139,6 +158,7 @@ class BasketBallGame extends Forge2DGame
         if (timer.value == 0) {
           // Pause the game,pause bg song and remove all balls with scoreboard components
           isGameOver = true;
+          _updateHighScore();
           pauseEngine();
           world.removeWhere((component) => component is BallComponent);FlameAudio.bgm.pause().then(
               (value) => FlameAudio.play(AudioAssets.buzzer, volume: 0.5));

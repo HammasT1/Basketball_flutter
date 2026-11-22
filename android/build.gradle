@@ -23,21 +23,23 @@ subprojects {
                 }
             }
         }
+        // Some plugins don't set a Kotlin jvmTarget, so it defaults to the JDK
+        // running Gradle, which conflicts with their Java compileOptions. Make
+        // Kotlin target the same Java version each module compiles Java for.
+        // (The app module sets its own jvmTarget in app/build.gradle.)
+        if (project.plugins.hasPlugin("com.android.library")) {
+            project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+                kotlinOptions {
+                    // read lazily: compileOptions is only final once tasks are configured
+                    jvmTarget = project.android.compileOptions.targetCompatibility.toString()
+                }
+            }
+        }
     }
 }
 
 subprojects {
     project.evaluationDependsOn(':app')
-}
-
-// Some older plugins don't set a Kotlin jvmTarget, so it defaults to the JDK
-// running Gradle (21), which then conflicts with their Java 1.8 compileOptions.
-subprojects {
-    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-        kotlinOptions {
-            jvmTarget = "1.8"
-        }
-    }
 }
 
 tasks.register("clean", Delete) {
