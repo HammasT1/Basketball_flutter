@@ -75,6 +75,8 @@ class BallComponent extends BodyComponent<BasketBallGame>
       ..anchor = Anchor.center
       ..opacity = 1
       ..size = Vector2.all(8.8);
+    // apply the ball skin equipped in the shop
+    _ball.paint.colorFilter = game.equippedBall.ballColorFilter;
     add(_ball);
     renderBody = false;
     body.sleepTime = 5;

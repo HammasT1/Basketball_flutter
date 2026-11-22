@@ -5,6 +5,8 @@ import 'package:basketball_game/components/mural_component.dart';
 import 'package:basketball_game/components/rim.dart';
 import 'package:basketball_game/constants/audio.dart';
 import 'package:basketball_game/services/score_storage.dart';
+import 'package:basketball_game/services/shop_storage.dart';
+import 'package:basketball_game/shop/shop_catalog.dart';
 import 'package:flame/components.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
@@ -61,6 +63,21 @@ class BasketBallGame extends Forge2DGame
   /// True when the round that just ended beat the previous [highScore].
   bool isNewHighScore = false;
 
+  /// Ball skin and court theme chosen in the shop.
+  ShopItem equippedBall = ShopCatalog.ballById(ShopCatalog.defaultBallId);
+  ShopItem equippedCourt = ShopCatalog.courtById(ShopCatalog.defaultCourtId);
+
+  /// Coins earned in the round that just ended (1 coin per point).
+  int coinsEarned = 0;
+
+  /// Banks the round's points as coins to spend in the shop.
+  void _awardCoins() {
+    coinsEarned = score.value;
+    if (coinsEarned > 0) {
+      ShopStorage.addCoins(coinsEarned);
+    }
+  }
+
   /// Compares the final score with the best one and saves it if it's higher.
   void _updateHighScore() {
     if (score.value > highScore) {
@@ -105,6 +122,9 @@ class BasketBallGame extends Forge2DGame
     camera.viewfinder.anchor = Anchor.topLeft;
     camera.viewfinder.position = Vector2.zero();
     highScore = await ScoreStorage.loadHighScore();
+    final shop = await ShopStorage.load();
+    equippedBall = shop.equippedBall;
+    equippedCourt = shop.equippedCourt;
     //load all gameComponents
     await loadAllComponents();
   }
@@ -159,6 +179,7 @@ class BasketBallGame extends Forge2DGame
           // Pause the game,pause bg song and remove all balls with scoreboard components
           isGameOver = true;
           _updateHighScore();
+          _awardCoins();
           pauseEngine();
           world.removeWhere((component) => component is BallComponent);FlameAudio.bgm.pause().then(
               (value) => FlameAudio.play(AudioAssets.buzzer, volume: 0.5));

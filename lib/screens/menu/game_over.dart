@@ -1,5 +1,7 @@
 import 'package:basketball_game/components/ball.dart';
 import 'package:basketball_game/game/basketball_game.dart';
+import 'package:basketball_game/screens/menu/main_menu.dart';
+import 'package:basketball_game/screens/shop/shop_screen.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -70,7 +72,7 @@ class GameOverScreen extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(bottom: 24),
+                padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   'BEST: ${game.highScore}',
                   style: const TextStyle(
@@ -78,6 +80,23 @@ class GameOverScreen extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Enhanced LED Board-7',
                       fontSize: 15),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 24),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      '+',
+                      style: TextStyle(
+                          color: Colors.amber,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Enhanced LED Board-7',
+                          fontSize: 18),
+                    ),
+                    CoinLabel(coins: game.coinsEarned),
+                  ],
                 ),
               ),
               SizedBox(
@@ -107,7 +126,40 @@ class GameOverScreen extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                             fontFamily: 'Enhanced LED Board-7',
                             fontSize: 14),
-                      ).animate().fade(duration: 500.ms).scale(delay: 500.ms)))
+                      ).animate().fade(duration: 500.ms).scale(delay: 500.ms))),
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: SizedBox(
+                  height: 40,
+                  width: screenSize.width * 0.7,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.deepOrange,
+                      side: const BorderSide(color: Colors.deepOrange, width: 2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    onPressed: () {
+                      // leave the game: stop its music and go back to the menu,
+                      // where the shop is
+                      FlameAudio.bgm.stop();
+                      Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const MainMenuScreen()));
+                    },
+                    icon: const Icon(Icons.storefront),
+                    label: const Text(
+                      'Main Menu / Shop',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Enhanced LED Board-7',
+                          fontSize: 14),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
